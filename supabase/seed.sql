@@ -1,0 +1,20 @@
+insert into public.departments (code, name) values
+  ('FINANCE', 'Phòng Tài chính'),
+  ('SALES', 'Kinh doanh'),
+  ('LOGISTICS', 'Kho Vận & Logistics'),
+  ('PURCHASE', 'Mua hàng'),
+  ('HR', 'Nhân sự'),
+  ('IT', 'Công nghệ thông tin'),
+  ('PRODUCTION', 'Sản xuất'),
+  ('PROJECT', 'Ban Dự án')
+on conflict (code) do nothing;
+
+insert into public.contribution_topics (code, category, name, description, response_hours, requires_review) values
+  ('PAY_VENDOR', 'payment', 'Góp ý về thanh toán nhà cung cấp', 'Chia sẻ vướng mắc hoặc đề xuất cải tiến quy trình thanh toán.', 24, true),
+  ('ADVANCE', 'advance', 'Góp ý về tạm ứng và hoàn ứng', 'Chia sẻ trải nghiệm về tạm ứng, hoàn ứng và chi phí phát sinh.', 16, true),
+  ('BUDGET', 'budget', 'Đề xuất về theo dõi ngân sách', 'Đề xuất cách tra cứu, theo dõi hoặc điều chỉnh ngân sách thuận tiện hơn.', 32, true),
+  ('INVOICE', 'invoice', 'Góp ý về hóa đơn và chứng từ', 'Chia sẻ điểm chưa thuận tiện khi kiểm tra và bổ sung chứng từ.', 12, false),
+  ('MASTER_DATA', 'master_data', 'Đề xuất về mã dữ liệu tài chính', 'Đề xuất cải thiện việc tạo và cập nhật mã dữ liệu phục vụ giao dịch.', 24, false),
+  ('REPORTING', 'reporting', 'Góp ý về báo cáo và đối soát', 'Chia sẻ nhu cầu cải thiện báo cáo, đối soát hoặc giải trình số liệu.', 40, false),
+  ('POLICY', 'policy_advice', 'Trao đổi về chính sách tài chính', 'Giải đáp quy định, biểu mẫu và cách hạch toán.', 8, false)
+on conflict (code) do nothing;
