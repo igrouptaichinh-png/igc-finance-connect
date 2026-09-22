@@ -51,4 +51,5 @@ Chưa cần bổ sung skill bắt buộc. Khi phát hành nên bổ sung kiểm 
 - Hoàn tất: Supabase Auth thật, bắt buộc đặt mật khẩu từ email mời và phân quyền bốn vai trò.
 - Hoàn tất: trang quản trị tài khoản trong app, Edge Function bảo vệ thao tác mời/sửa/khóa tài khoản và các quy tắc an toàn Admin.
 - Hoàn tất: repository GitHub Public, GitHub Actions/Pages, project Supabase, schema PostgreSQL/RLS, Storage và URL Auth.
-- Tiếp theo: khởi tạo Finance Admin đầu tiên, kiểm thử email mời đầu-cuối và chuyển dữ liệu nghiệp vụ demo sang Supabase.
+- Hoàn tất: khởi tạo Finance Admin đầu tiên và gửi email kích hoạt tài khoản công ty.
+- Tiếp theo: người dùng hoàn tất đặt mật khẩu từ email mời, kiểm thử đăng nhập đầu-cuối và chuyển dữ liệu nghiệp vụ demo sang Supabase.
