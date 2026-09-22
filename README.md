@@ -53,4 +53,4 @@ Không đưa secret key hoặc service-role key vào biến `VITE_*` hay source 
 
 ## Triển khai GitHub
 
-Ứng dụng dùng hash routing nên có thể chạy trên GitHub Pages mà không cần cấu hình rewrite. Chỉ tạo repository/remote và workflow deploy sau khi bản local được duyệt.
+Source code được lưu trong repository Private `igrouptaichinh-png/igc-finance-connect`. Workflow GitHub Pages được chuẩn bị ở chế độ chạy thủ công. GitHub Free không hỗ trợ Pages cho repository Private; chỉ bật workflow khi chuyển repository thành Public hoặc nâng cấp gói phù hợp.
