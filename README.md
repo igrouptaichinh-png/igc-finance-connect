@@ -53,4 +53,4 @@ Không đưa secret key hoặc service-role key vào biến `VITE_*` hay source 
 
 ## Triển khai GitHub
 
-Source code được lưu trong repository Private `igrouptaichinh-png/igc-finance-connect`. Workflow GitHub Pages được chuẩn bị ở chế độ chạy thủ công. GitHub Free không hỗ trợ Pages cho repository Private; chỉ bật workflow khi chuyển repository thành Public hoặc nâng cấp gói phù hợp.
+Source code được lưu trong repository Public `igrouptaichinh-png/igc-finance-connect`. Mỗi lần cập nhật branch `main`, GitHub Actions sẽ kiểm tra lint/build và triển khai bản mới lên GitHub Pages.
