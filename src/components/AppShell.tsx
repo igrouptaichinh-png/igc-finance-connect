@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {sidebarOpen && <button className="mobile-veil" aria-label="Đóng menu" onClick={() => setSidebarOpen(false)} />}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="brand-block">
-          <span className="brand-mark"><img src="/brand/ntsf-logo.png" alt="Nha Trang Seafoods" /></span>
+          <span className="brand-mark"><img src={`${import.meta.env.BASE_URL}brand/ntsf-logo.png`} alt="Nha Trang Seafoods" /></span>
           <div><strong>IGC Finance Connect</strong><span>Cùng đóng góp · Cùng cải tiến</span></div>
           <button className="mobile-close" onClick={() => setSidebarOpen(false)}><X size={18} /></button>
         </div>

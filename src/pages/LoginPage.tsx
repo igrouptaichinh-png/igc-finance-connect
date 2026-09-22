@@ -20,7 +20,7 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-story">
-        <div className="login-brand"><span className="brand-mark"><img src="/brand/ntsf-logo.png" alt="Nha Trang Seafoods" /></span><div><strong>IGC Finance Connect</strong><small>Cùng đóng góp · Cùng cải tiến</small></div></div>
+        <div className="login-brand"><span className="brand-mark"><img src={`${import.meta.env.BASE_URL}brand/ntsf-logo.png`} alt="Nha Trang Seafoods" /></span><div><strong>IGC Finance Connect</strong><small>Cùng đóng góp · Cùng cải tiến</small></div></div>
         <div className="login-message"><span>Finance Collaboration Hub</span><h1>Cùng lắng nghe.<br />Cùng cải tiến.</h1><p>Không gian chung để nhân viên và Phòng Tài chính chia sẻ ý kiến, trao đổi và biến đóng góp thành những cải tiến thiết thực.</p></div>
         <div className="login-points"><span><CheckCircle2 size={17} />Chia sẻ cởi mở</span><span><ShieldCheck size={17} />Phản hồi minh bạch</span><span><UserRoundCog size={17} />Ghi nhận cải tiến</span></div>
       </section>
