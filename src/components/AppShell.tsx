@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <div className={`data-status ${isSupabaseConfigured ? 'online' : ''}`}><i /><span><strong>{isSupabaseConfigured ? 'Supabase đã kết nối' : 'Chế độ dữ liệu demo'}</strong><small>{isSupabaseConfigured ? 'Dữ liệu đám mây' : 'Lưu trên trình duyệt này'}</small></span></div>
+          <div className={`data-status ${isSupabaseConfigured ? 'online' : ''}`}><i /><span><strong>{isSupabaseConfigured ? 'Hạ tầng Supabase sẵn sàng' : 'Chế độ dữ liệu demo'}</strong><small>{isSupabaseConfigured ? 'Demo vẫn lưu trên trình duyệt' : 'Lưu trên trình duyệt này'}</small></span></div>
           <button className="help-link"><CircleHelp size={17} />Hướng dẫn sử dụng</button>
         </div>
       </aside>
