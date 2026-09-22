@@ -21,6 +21,7 @@ interface AuthContextValue {
   isLoading: boolean
   authMessage: string
   login: (email: string, password: string) => Promise<string | null>
+  resetPassword: (email: string) => Promise<string | null>
   loginAs: (id: string) => void
   logout: () => Promise<void>
   updatePassword: (password: string) => Promise<string | null>
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const demoUser = accounts.find((account) => account.id === demoUserId && account.active) || null
   const user = realUser || demoUser
 
-  const syncSession = useCallback(async (authUser: User | null) => {
+  const syncSession = useCallback(async (authUser: User | null, forcePasswordSetup = false) => {
     if (!authUser) {
       setRealUser(null)
       setIsLoading(false)
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const profile = await loadProfile(authUser)
-      setRealUser(profile)
+      setRealUser(forcePasswordSetup ? { ...profile, needsPasswordSetup: true } : profile)
       setDemoUserId(null)
       localStorage.removeItem(SESSION_KEY)
       setAuthMessage('')
@@ -112,8 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void supabase.auth.getSession().then(({ data }) => {
       if (mounted) void syncSession(data.session?.user || null)
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) window.setTimeout(() => void syncSession(session?.user || null), 0)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) window.setTimeout(() => void syncSession(session?.user || null, event === 'PASSWORD_RECOVERY'), 0)
     })
     return () => {
       mounted = false
@@ -159,6 +160,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return friendlyAuthError(error.message)
       }
       await syncSession(data.user)
+      return null
+    },
+    async resetPassword(email) {
+      if (!supabase) return 'Môi trường này chưa kết nối Supabase.'
+      const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString()
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo })
+      if (error) return friendlyAuthError(error.message)
       return null
     },
     loginAs,
