@@ -130,6 +130,7 @@ create table public.improvements (
 create index profiles_department_id_idx on public.profiles (department_id);
 create index contribution_topics_category_active_idx on public.contribution_topics (category, is_active);
 create index contributions_contributor_created_idx on public.contributions (contributor_id, created_at desc);
+create index contributions_topic_created_idx on public.contributions (topic_id, created_at desc);
 create index contributions_assignee_status_due_idx on public.contributions (assignee_id, status, response_due_at);
 create index contributions_reviewer_status_idx on public.contributions (reviewer_id, status, updated_at desc);
 create index contributions_department_created_idx on public.contributions (department_id, created_at desc);
@@ -234,26 +235,23 @@ with check (
   )
 );
 
-create policy "contributors edit open contributions"
-on public.contributions for update to authenticated
-using (contributor_id = (select auth.uid()) and status in ('new', 'needs_information'))
-with check (contributor_id = (select auth.uid()) and status in ('new', 'needs_information'));
-
-create policy "finance roles manage contributions"
+create policy "contributors and finance roles update contributions"
 on public.contributions for update to authenticated
 using (
-  exists (
-    select 1 from public.profiles p
-    where p.user_id = (select auth.uid()) and p.is_active
-      and p.role in ('finance_agent', 'approver', 'finance_admin')
-  )
+  (contributor_id = (select auth.uid()) and status in ('new', 'needs_information'))
+  or exists (
+      select 1 from public.profiles p
+      where p.user_id = (select auth.uid()) and p.is_active
+        and p.role in ('finance_agent', 'approver', 'finance_admin')
+    )
 )
 with check (
-  exists (
-    select 1 from public.profiles p
-    where p.user_id = (select auth.uid()) and p.is_active
-      and p.role in ('finance_agent', 'approver', 'finance_admin')
-  )
+  (contributor_id = (select auth.uid()) and status in ('new', 'needs_information'))
+  or exists (
+      select 1 from public.profiles p
+      where p.user_id = (select auth.uid()) and p.is_active
+        and p.role in ('finance_agent', 'approver', 'finance_admin')
+    )
 );
 
 create policy "users read comments on visible contributions"
@@ -358,6 +356,7 @@ revoke all on all tables in schema public from anon, authenticated;
 revoke all on all sequences in schema public from anon, authenticated;
 revoke all on function public.set_updated_at() from public, anon, authenticated;
 revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
 
 grant usage on schema public to authenticated;
 grant select on public.departments, public.profiles, public.contribution_topics to authenticated;
