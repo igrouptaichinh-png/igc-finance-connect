@@ -3,18 +3,21 @@ import { ArrowRight, CheckCircle2, LockKeyhole, ShieldCheck, UserRoundCog } from
 import { useAuth } from '../features/auth/AuthContext'
 import { roleLabels } from '../features/auth/types'
 
-const demoIds = ['requester-minh-anh', 'agent-thu-ha', 'admin-finance']
+const demoIds = ['requester-minh-anh', 'agent-thu-ha', 'approver-ngoc-linh', 'admin-finance']
 
 export function LoginPage() {
-  const { accounts, login, loginAs } = useAuth()
-  const [email, setEmail] = useState('minhanh@demo.igc.vn')
-  const [password, setPassword] = useState('demo123')
+  const { accounts, authMessage, login, loginAs } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault()
-    const message = login(email, password)
+    setSubmitting(true)
+    const message = await login(email, password)
     setError(message || '')
+    setSubmitting(false)
   }
 
   return (
@@ -31,14 +34,14 @@ export function LoginPage() {
           <form onSubmit={submit}>
             <label>Email công ty<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="username" required /></label>
             <label>Mật khẩu<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></label>
-            {error && <div className="login-error" role="alert">{error}</div>}
-            <button className="button button-primary login-submit" type="submit">Đăng nhập <ArrowRight size={16} /></button>
+            {(error || authMessage) && <div className="login-error" role="alert">{error || authMessage}</div>}
+            <button className="button button-primary login-submit" type="submit" disabled={submitting}>{submitting ? 'Đang xác thực...' : 'Đăng nhập'} {!submitting && <ArrowRight size={16} />}</button>
           </form>
           <div className="demo-divider"><span>Truy cập nhanh bản demo</span></div>
           <div className="demo-accounts">
             {demoIds.map((id) => { const account = accounts.find((item) => item.id === id); if (!account) return null; return <button key={account.id} onClick={() => loginAs(account.id)}><span className="avatar">{account.fullName.split(' ').slice(-2).map((part) => part[0]).join('')}</span><span><strong>{roleLabels[account.role]}</strong><small>{account.fullName}</small></span><ArrowRight size={15} /></button> })}
           </div>
-          <small className="demo-note">Bản demo dùng mật khẩu chung <strong>demo123</strong>. Khi kết nối Supabase, đăng nhập sẽ chuyển sang tài khoản được mời bằng email công ty.</small>
+          <small className="demo-note">Bản demo dùng mật khẩu chung <strong>demo123</strong>. Tài khoản thật được Finance Admin mời bằng email và phân quyền ngay trong ứng dụng.</small>
         </div>
       </section>
     </main>

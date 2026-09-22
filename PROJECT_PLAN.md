@@ -47,7 +47,8 @@ Chưa cần bổ sung skill bắt buộc. Khi phát hành nên bổ sung kiểm 
 
 ## Trạng thái triển khai
 
-- Hoàn tất: folder riêng, cấu trúc màn hình Finance Connect, nhận diện App Kho, kiểm tra skill, UI local, dữ liệu demo, đăng nhập demo và phân quyền ba vai trò.
-- Hoàn tất: trang quản lý tài khoản demo, mời thành viên, khóa/mở tài khoản và chuyển vai trò để kiểm thử.
-- Đã chuẩn bị: adapter Supabase, biến môi trường mẫu, schema PostgreSQL/RLS.
-- Chờ duyệt: tạo repository GitHub, GitHub Pages/Actions, project Supabase và dữ liệu thật.
+- Hoàn tất: folder riêng, cấu trúc màn hình Finance Connect, nhận diện App Kho, kiểm tra skill, UI local và dữ liệu demo.
+- Hoàn tất: Supabase Auth thật, bắt buộc đặt mật khẩu từ email mời và phân quyền bốn vai trò.
+- Hoàn tất: trang quản trị tài khoản trong app, Edge Function bảo vệ thao tác mời/sửa/khóa tài khoản và các quy tắc an toàn Admin.
+- Hoàn tất: repository GitHub Public, GitHub Actions/Pages, project Supabase, schema PostgreSQL/RLS, Storage và URL Auth.
+- Tiếp theo: khởi tạo Finance Admin đầu tiên, kiểm thử email mời đầu-cuối và chuyển dữ liệu nghiệp vụ demo sang Supabase.

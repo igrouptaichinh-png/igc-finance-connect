@@ -16,19 +16,19 @@ interface NavGroup { section: string; items: NavItem[] }
 
 const nav: NavGroup[] = [
   { section: 'Không gian làm việc', items: [
-    { to: '/', label: 'Tổng quan', icon: LayoutDashboard, roles: ['requester', 'finance_agent', 'finance_admin'] },
+    { to: '/', label: 'Tổng quan', icon: LayoutDashboard, roles: ['requester', 'finance_agent', 'approver', 'finance_admin'] },
     { to: '/new', label: 'Chia sẻ ý kiến', icon: FilePlus2, roles: ['requester', 'finance_admin'], accent: true },
     { to: '/my-requests', label: 'Đóng góp của tôi', icon: TicketCheck, roles: ['requester', 'finance_admin'], count: 4 },
-    { to: '/community', label: 'Cộng đồng đóng góp', icon: UsersRound, roles: ['requester', 'finance_agent', 'finance_admin'] },
+    { to: '/community', label: 'Cộng đồng đóng góp', icon: UsersRound, roles: ['requester', 'finance_agent', 'approver', 'finance_admin'] },
   ] },
   { section: 'Kết nối Tài chính', items: [
     { to: '/queue', label: 'Ý kiến chờ phản hồi', icon: Inbox, roles: ['finance_agent', 'finance_admin'], count: 5 },
-    { to: '/approvals', label: 'Đánh giá đề xuất', icon: CheckSquare2, roles: ['finance_agent', 'finance_admin'], count: 1 },
-    { to: '/improvements', label: 'Cải tiến đã áp dụng', icon: Sparkles, roles: ['requester', 'finance_agent', 'finance_admin'] },
-    { to: '/knowledge', label: 'Kho kiến thức', icon: BookOpenText, roles: ['requester', 'finance_agent', 'finance_admin'] },
+    { to: '/approvals', label: 'Đánh giá đề xuất', icon: CheckSquare2, roles: ['approver', 'finance_admin'], count: 1 },
+    { to: '/improvements', label: 'Cải tiến đã áp dụng', icon: Sparkles, roles: ['requester', 'finance_agent', 'approver', 'finance_admin'] },
+    { to: '/knowledge', label: 'Kho kiến thức', icon: BookOpenText, roles: ['requester', 'finance_agent', 'approver', 'finance_admin'] },
   ] },
   { section: 'Quản trị', items: [
-    { to: '/reports', label: 'Báo cáo', icon: BarChart3, roles: ['finance_agent', 'finance_admin'] },
+    { to: '/reports', label: 'Báo cáo', icon: BarChart3, roles: ['finance_agent', 'approver', 'finance_admin'] },
     { to: '/accounts', label: 'Tài khoản & phân quyền', icon: UsersRound, roles: ['finance_admin'] },
     { to: '/settings', label: 'Thiết lập', icon: Settings2, roles: ['finance_admin'] },
   ] },
@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <div className={`data-status ${isSupabaseConfigured ? 'online' : ''}`}><i /><span><strong>{isSupabaseConfigured ? 'Hạ tầng Supabase sẵn sàng' : 'Chế độ dữ liệu demo'}</strong><small>{isSupabaseConfigured ? 'Demo vẫn lưu trên trình duyệt' : 'Lưu trên trình duyệt này'}</small></span></div>
+          <div className={`data-status ${user.source === 'supabase' ? 'online' : ''}`}><i /><span><strong>{user.source === 'supabase' ? 'Đã đăng nhập an toàn' : 'Chế độ xem trước'}</strong><small>{user.source === 'supabase' ? 'Phiên Supabase Auth' : isSupabaseConfigured ? 'Dữ liệu demo trên trình duyệt' : 'Lưu trên trình duyệt này'}</small></span></div>
           <button className="help-link"><CircleHelp size={17} />Hướng dẫn sử dụng</button>
         </div>
       </aside>
@@ -111,8 +111,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               {userMenuOpen && <div className="user-popover">
                 <header><span className="avatar">{initials}</span><span><strong>{user.fullName}</strong><small>{user.email}</small></span></header>
                 <div className="current-role"><ShieldCheck size={15} /><span><small>Vai trò hiện tại</small><strong>{roleLabels[user.role]}</strong></span></div>
-                <div className="role-switch"><span>Chuyển vai trò demo</span>{accounts.filter((account) => account.active && ['requester-minh-anh', 'agent-thu-ha', 'admin-finance'].includes(account.id) && account.id !== user.id).map((account) => <button key={account.id} onClick={() => switchAccount(account.id)}><UserCog size={15} /><span><strong>{roleLabels[account.role]}</strong><small>{account.fullName}</small></span></button>)}</div>
-                <button className="logout-button" onClick={() => { logout(); setUserMenuOpen(false) }}><LogOut size={15} />Đăng xuất</button>
+                {user.source === 'demo' && <div className="role-switch"><span>Chuyển vai trò demo</span>{accounts.filter((account) => account.active && ['requester-minh-anh', 'agent-thu-ha', 'approver-ngoc-linh', 'admin-finance'].includes(account.id) && account.id !== user.id).map((account) => <button key={account.id} onClick={() => switchAccount(account.id)}><UserCog size={15} /><span><strong>{roleLabels[account.role]}</strong><small>{account.fullName}</small></span></button>)}</div>}
+                <button className="logout-button" onClick={() => { void logout(); setUserMenuOpen(false) }}><LogOut size={15} />Đăng xuất</button>
               </div>}
             </div>
           </div>

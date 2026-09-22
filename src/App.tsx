@@ -12,6 +12,7 @@ import { ImprovementsPage } from './pages/ImprovementsPage'
 import { KnowledgePage } from './pages/KnowledgePage'
 import { LoginPage } from './pages/LoginPage'
 import { NewRequestPage } from './pages/NewRequestPage'
+import { PasswordSetupPage } from './pages/PasswordSetupPage'
 import { QueuePage } from './pages/QueuePage'
 import { ReportsPage } from './pages/ReportsPage'
 import { RequestListPage } from './pages/RequestListPage'
@@ -23,8 +24,10 @@ function RequireRole({ roles, children }: { roles: AppRole[], children: React.Re
 }
 
 function AuthenticatedApp() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+  if (isLoading) return <main className="auth-loading"><span className="brand-mark"><img src={`${import.meta.env.BASE_URL}brand/ntsf-logo.png`} alt="Nha Trang Seafoods" /></span><strong>Đang kiểm tra phiên đăng nhập...</strong></main>
   if (!user) return <LoginPage />
+  if (user.needsPasswordSetup) return <PasswordSetupPage />
 
   return (
     <RequestProvider>
@@ -35,10 +38,10 @@ function AuthenticatedApp() {
           <Route path="/my-requests" element={<RequireRole roles={['requester', 'finance_admin']}><RequestListPage /></RequireRole>} />
           <Route path="/community" element={<CommunityPage />} />
           <Route path="/queue" element={<RequireRole roles={['finance_agent', 'finance_admin']}><QueuePage /></RequireRole>} />
-          <Route path="/approvals" element={<RequireRole roles={['finance_agent', 'finance_admin']}><ApprovalsPage /></RequireRole>} />
+          <Route path="/approvals" element={<RequireRole roles={['approver', 'finance_admin']}><ApprovalsPage /></RequireRole>} />
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/improvements" element={<ImprovementsPage />} />
-          <Route path="/reports" element={<RequireRole roles={['finance_agent', 'finance_admin']}><ReportsPage /></RequireRole>} />
+          <Route path="/reports" element={<RequireRole roles={['finance_agent', 'approver', 'finance_admin']}><ReportsPage /></RequireRole>} />
           <Route path="/accounts" element={<RequireRole roles={['finance_admin']}><AccountsPage /></RequireRole>} />
           <Route path="/settings" element={<RequireRole roles={['finance_admin']}><SettingsPage /></RequireRole>} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, ArrowRight, CheckCircle2, Clock3, FilePlus2, Inbox, TimerReset, TrendingUp } from 'lucide-react'
+import { AlertCircle, ArrowRight, CheckCircle2, CheckSquare2, Clock3, FilePlus2, Inbox, TimerReset, TrendingUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { FinanceRequest } from '../domain/types'
 import { useRequests } from '../features/requests/RequestContext'
@@ -14,6 +14,12 @@ export function DashboardPage() {
   const { user } = useAuth()
   const [selected, setSelected] = useState<FinanceRequest | null>(null)
   const isRequester = user?.role === 'requester'
+  const isApprover = user?.role === 'approver'
+  const primaryAction = isRequester
+    ? { to: '/new', label: 'Chia sẻ ý kiến', icon: <FilePlus2 size={18} /> }
+    : isApprover
+      ? { to: '/approvals', label: 'Xem đề xuất cần đánh giá', icon: <CheckSquare2 size={18} /> }
+      : { to: '/queue', label: 'Xem ý kiến mới', icon: <Inbox size={18} /> }
   const visibleRequests = isRequester ? requests.filter((item) => item.requester === user.fullName) : requests
   const stats = useMemo(() => ({
     open: visibleRequests.filter((item) => !['Hoàn tất', 'Từ chối'].includes(item.status)).length,
@@ -34,7 +40,7 @@ export function DashboardPage() {
     <>
       <section className="page-heading dashboard-heading">
         <div><p>{new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</p><h1>Chào buổi sáng, {user?.fullName.split(' ').slice(-2).join(' ')}</h1><span>{isRequester ? 'Cùng chia sẻ để các quy trình tài chính ngày càng thuận tiện hơn.' : 'Lắng nghe, trao đổi và phản hồi các đóng góp từ những phòng ban.'}</span></div>
-        <Link to={isRequester ? '/new' : '/queue'} className="button button-primary button-large">{isRequester ? <FilePlus2 size={18} /> : <Inbox size={18} />}{isRequester ? 'Chia sẻ ý kiến' : 'Xem ý kiến mới'}</Link>
+        <Link to={primaryAction.to} className="button button-primary button-large">{primaryAction.icon}{primaryAction.label}</Link>
       </section>
 
       <section className="process-rail card-surface">
