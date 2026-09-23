@@ -7,10 +7,9 @@ import type { FinanceRequest } from '../domain/types'
 import { useRequests } from '../features/requests/RequestContext'
 
 export function CommunityPage() {
-  const { requests } = useRequests()
+  const { requests, toggleVote } = useRequests()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<FinanceRequest | null>(null)
-  const [voted, setVoted] = useState<string[]>([])
   const contributions = useMemo(() => requests.filter((item) => item.visibility !== 'Chỉ Phòng Tài chính' && `${item.title} ${item.category} ${item.department}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => (b.votes || 0) - (a.votes || 0)), [requests, query])
 
   return (
@@ -22,7 +21,7 @@ export function CommunityPage() {
           <header><span className="request-code">{item.code}</span><StatusBadge status={item.status} /></header>
           <button className="community-title" onClick={() => setSelected(item)}><h2>{item.title}</h2><p>{item.description}</p></button>
           {item.expectedBenefit && <div className="benefit-note"><Sparkles size={14} /><span><strong>Lợi ích kỳ vọng</strong>{item.expectedBenefit}</span></div>}
-          <footer><span><b>{item.requester}</b><small>{item.department}</small></span><div><button className={voted.includes(item.id) ? 'voted' : ''} onClick={() => setVoted((current) => current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id])}><Heart size={15} />{(item.votes || 0) + (voted.includes(item.id) ? 1 : 0)}</button><button onClick={() => setSelected(item)}><MessageCircle size={15} />{item.comments || 0}</button><button onClick={() => setSelected(item)} aria-label={`Xem ${item.code}`}><ArrowRight size={15} /></button></div></footer>
+          <footer><span><b>{item.requester}</b><small>{item.department}</small></span><div><button className={item.votedByCurrentUser ? 'voted' : ''} onClick={() => void toggleVote(item.id)}><Heart size={15} />{item.votes || 0}</button><button onClick={() => setSelected(item)}><MessageCircle size={15} />{item.comments || 0}</button><button onClick={() => setSelected(item)} aria-label={`Xem ${item.code}`}><ArrowRight size={15} /></button></div></footer>
         </article>)}
       </section>
       {!contributions.length && <div className="community-empty">Chưa tìm thấy ý kiến phù hợp. Hãy thử một chủ đề khác.</div>}

@@ -35,6 +35,7 @@ export interface FinanceRequest {
   category: RequestCategory
   requestType: string
   requester: string
+  contributorId: string
   department: string
   createdAt: string
   updatedAt: string
@@ -51,6 +52,7 @@ export interface FinanceRequest {
   visibility?: 'Công khai nội bộ' | 'Chỉ phòng ban' | 'Chỉ Phòng Tài chính'
   votes?: number
   comments?: number
+  votedByCurrentUser?: boolean
   timeline: TimelineEvent[]
 }
 

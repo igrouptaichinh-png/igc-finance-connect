@@ -1,15 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   BarChart3, Bell, BookOpenText, CheckSquare2, ChevronDown, CircleHelp,
   FilePlus2, Inbox, LayoutDashboard, LogOut, Menu, Moon, Search, Settings2,
-  ShieldCheck, Sparkles, Sun, TicketCheck, UserCog, UsersRound, X,
+  ShieldCheck, Sparkles, Sun, TicketCheck, UsersRound, X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../features/auth/AuthContext'
 import { roleLabels, type AppRole } from '../features/auth/types'
 import { useRequests } from '../features/requests/RequestContext'
-import { isSupabaseConfigured } from '../lib/supabase'
 
 interface NavItem { to: string; label: string; icon: LucideIcon; roles: AppRole[]; accent?: boolean; count?: number }
 interface NavGroup { section: string; items: NavItem[] }
@@ -42,8 +41,7 @@ const pageNames: Record<string, string> = {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const navigate = useNavigate()
-  const { user, accounts, loginAs, logout } = useAuth()
+  const { user, logout } = useAuth()
   const { requests } = useRequests()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -57,12 +55,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!user) return null
   const initials = user.fullName.split(' ').slice(-2).map((part) => part[0]).join('')
   const visibleGroups = nav.map((group) => ({ ...group, items: group.items.filter((item) => item.roles.includes(user.role)) })).filter((group) => group.items.length)
-
-  function switchAccount(id: string) {
-    loginAs(id)
-    setUserMenuOpen(false)
-    navigate('/')
-  }
 
   return (
     <div className="app-shell">
@@ -80,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {group.items.map((item) => {
                 const Icon = item.icon
                 const count = item.to === '/my-requests'
-                  ? requests.filter((request) => request.requester === user.fullName).length
+                  ? requests.filter((request) => request.contributorId === user.id).length
                   : item.to === '/queue'
                     ? requests.filter((request) => !['Hoàn tất', 'Từ chối'].includes(request.status)).length
                     : item.to === '/approvals'
@@ -94,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <div className={`data-status ${user.source === 'supabase' ? 'online' : ''}`}><i /><span><strong>{user.source === 'supabase' ? 'Đã đăng nhập an toàn' : 'Chế độ xem trước'}</strong><small>{user.source === 'supabase' ? 'Phiên Supabase Auth' : isSupabaseConfigured ? 'Dữ liệu demo trên trình duyệt' : 'Lưu trên trình duyệt này'}</small></span></div>
+          <div className="data-status online"><i /><span><strong>Đã đăng nhập an toàn</strong><small>Dữ liệu trực tiếp từ Supabase</small></span></div>
           <button className="help-link"><CircleHelp size={17} />Hướng dẫn sử dụng</button>
         </div>
       </aside>
@@ -111,7 +103,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               {userMenuOpen && <div className="user-popover">
                 <header><span className="avatar">{initials}</span><span><strong>{user.fullName}</strong><small>{user.email}</small></span></header>
                 <div className="current-role"><ShieldCheck size={15} /><span><small>Vai trò hiện tại</small><strong>{roleLabels[user.role]}</strong></span></div>
-                {user.source === 'demo' && <div className="role-switch"><span>Chuyển vai trò demo</span>{accounts.filter((account) => account.active && ['requester-minh-anh', 'agent-thu-ha', 'approver-ngoc-linh', 'admin-finance'].includes(account.id) && account.id !== user.id).map((account) => <button key={account.id} onClick={() => switchAccount(account.id)}><UserCog size={15} /><span><strong>{roleLabels[account.role]}</strong><small>{account.fullName}</small></span></button>)}</div>}
                 <button className="logout-button" onClick={() => { void logout(); setUserMenuOpen(false) }}><LogOut size={15} />Đăng xuất</button>
               </div>}
             </div>

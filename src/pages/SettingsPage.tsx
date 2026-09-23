@@ -1,10 +1,9 @@
 import { BellRing, ChevronRight, Clock3, Database, GitBranch, LockKeyhole, Plus, RotateCcw, SlidersHorizontal, UsersRound } from 'lucide-react'
-import { requestTypes } from '../data/demo'
 import { useRequests } from '../features/requests/RequestContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 export function SettingsPage() {
-  const { resetDemo } = useRequests()
+  const { topics: requestTypes, refresh } = useRequests()
   return (
     <>
       <section className="page-heading"><div><p>Quản trị hệ thống</p><h1>Thiết lập Finance Connect</h1><span>Cấu hình chủ đề, thời gian phản hồi và quyền truy cập.</span></div><button className="button button-primary"><Plus size={16} />Thêm chủ đề</button></section>
@@ -17,7 +16,7 @@ export function SettingsPage() {
           <div className="request-type-list">{requestTypes.map((item, index) => <article key={item.name}><div className="type-order">{String(index + 1).padStart(2, '0')}</div><div><span>{item.category}</span><strong>{item.name}</strong><p>{item.description}</p></div><div className="type-rules"><span><Clock3 size={14} />{item.slaHours} giờ</span>{item.requiresApproval && <span className="approval-rule">Cần đánh giá</span>}</div><label className="switch"><input type="checkbox" defaultChecked /><i /></label><button className="icon-button"><ChevronRight size={17} /></button></article>)}</div>
         </div>
       </section>
-      <section className="environment-card content-card"><div className={`environment-icon ${isSupabaseConfigured ? 'ready' : ''}`}><Database size={22} /></div><div><span>Môi trường dữ liệu</span><h3>{isSupabaseConfigured ? 'Kết nối Supabase đã sẵn sàng' : 'Bản xem trước đang dùng localStorage'}</h3><p>{isSupabaseConfigured ? 'Schema, RLS và Storage đã cấu hình. Dữ liệu demo vẫn dùng localStorage cho đến bước tích hợp tài khoản và dữ liệu thật.' : 'Thêm VITE_SUPABASE_URL và VITE_SUPABASE_PUBLISHABLE_KEY khi tạo môi trường thật.'}</p></div><button className="button button-secondary" onClick={() => { resetDemo(); window.location.reload() }}><RotateCcw size={15} />Khôi phục dữ liệu demo</button></section>
+      <section className="environment-card content-card"><div className={`environment-icon ${isSupabaseConfigured ? 'ready' : ''}`}><Database size={22} /></div><div><span>Môi trường dữ liệu</span><h3>{isSupabaseConfigured ? 'Đang sử dụng dữ liệu thật trên Supabase' : 'Chưa kết nối Supabase'}</h3><p>{isSupabaseConfigured ? 'Tài khoản, phân quyền, chủ đề và ý kiến đóng góp đều được đọc và lưu trực tiếp trên Supabase.' : 'Thêm VITE_SUPABASE_URL và VITE_SUPABASE_PUBLISHABLE_KEY để vận hành ứng dụng.'}</p></div><button className="button button-secondary" onClick={() => void refresh()}><RotateCcw size={15} />Làm mới dữ liệu</button></section>
     </>
   )
 }

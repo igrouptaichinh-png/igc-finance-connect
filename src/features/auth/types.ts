@@ -1,5 +1,4 @@
 export type AppRole = 'requester' | 'finance_agent' | 'approver' | 'finance_admin'
-export type AccountSource = 'demo' | 'supabase'
 
 export interface AppUser {
   id: string
@@ -9,16 +8,8 @@ export interface AppUser {
   department: string
   role: AppRole
   active: boolean
-  source: AccountSource
+  source: 'supabase'
   needsPasswordSetup?: boolean
-}
-
-export interface CreateAccountInput {
-  fullName: string
-  email: string
-  departmentId: number | null
-  department: string
-  role: AppRole
 }
 
 export interface DepartmentOption {

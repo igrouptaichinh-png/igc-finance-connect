@@ -1,12 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, KeyRound, LockKeyhole, ShieldCheck, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../features/auth/AuthContext'
-import { roleLabels } from '../features/auth/types'
-
-const demoIds = ['requester-minh-anh', 'agent-thu-ha', 'approver-ngoc-linh', 'admin-finance']
 
 export function LoginPage() {
-  const { accounts, authMessage, login, loginAs, resetPassword } = useAuth()
+  const { authMessage, login, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -56,11 +53,7 @@ export function LoginPage() {
             <button className="button button-primary login-submit" type="submit" disabled={submitting}>{submitting ? 'Đang xác thực...' : 'Đăng nhập'} {!submitting && <ArrowRight size={16} />}</button>
             <button className="password-help" type="button" onClick={() => { setRecoveryMode(true); setError('') }}><KeyRound size={14} />Chưa có hoặc quên mật khẩu?</button>
           </form>}
-          <div className="demo-divider"><span>Truy cập nhanh bản demo</span></div>
-          <div className="demo-accounts">
-            {demoIds.map((id) => { const account = accounts.find((item) => item.id === id); if (!account) return null; return <button key={account.id} onClick={() => loginAs(account.id)}><span className="avatar">{account.fullName.split(' ').slice(-2).map((part) => part[0]).join('')}</span><span><strong>{roleLabels[account.role]}</strong><small>{account.fullName}</small></span><ArrowRight size={15} /></button> })}
-          </div>
-          <small className="demo-note">Bản demo dùng mật khẩu chung <strong>demo123</strong>. Tài khoản thật được Finance Admin mời bằng email và phân quyền ngay trong ứng dụng.</small>
+          <small className="login-security-note">Chỉ tài khoản công ty đã được Finance Admin cấp quyền mới có thể truy cập hệ thống.</small>
         </div>
       </section>
     </main>

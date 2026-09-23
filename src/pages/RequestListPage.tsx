@@ -10,7 +10,7 @@ import { useAuth } from '../features/auth/AuthContext'
 export function RequestListPage() {
   const { requests } = useRequests()
   const { user } = useAuth()
-  const scopedRequests = user?.role === 'requester' ? requests.filter((request) => request.requester === user.fullName) : requests
+  const scopedRequests = user?.role === 'requester' ? requests.filter((request) => request.contributorId === user.id) : requests
   const [params] = useSearchParams()
   const [selected, setSelected] = useState<FinanceRequest | null>(() => scopedRequests.find((item) => item.id === params.get('created')) || null)
   const [search, setSearch] = useState('')

@@ -17,6 +17,8 @@ const nextStatus: Partial<Record<RequestStatus, RequestStatus>> = {
 export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequest | null; onClose: () => void }) {
   const { requests, updateStatus, addComment } = useRequests()
   const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const current = requests.find((item) => item.id === request?.id) ?? request
 
   useEffect(() => {
@@ -29,10 +31,27 @@ export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequ
   if (!current) return null
   const advance = nextStatus[current.status]
 
-  const submitComment = () => {
+  const submitComment = async () => {
     if (!comment.trim()) return
-    addComment(current.id, comment.trim())
-    setComment('')
+    setBusy(true)
+    setError('')
+    try {
+      await addComment(current.id, comment.trim())
+      setComment('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể gửi trao đổi.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const advanceStatus = async () => {
+    if (!advance) return
+    setBusy(true)
+    setError('')
+    try { await updateStatus(current.id, advance) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Không thể cập nhật trạng thái.') }
+    finally { setBusy(false) }
   }
 
   return (
@@ -85,13 +104,14 @@ export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequ
           <h3><MessageSquare size={16} />Trao đổi</h3>
           <div className="comment-box">
             <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Chia sẻ thêm thông tin hoặc trao đổi cùng Phòng Tài chính..." />
-            <button className="button button-primary button-icon-text" onClick={submitComment}><Send size={15} />Gửi</button>
+            <button className="button button-primary button-icon-text" onClick={() => void submitComment()} disabled={busy}><Send size={15} />Gửi</button>
           </div>
+          {error && <div className="account-notice error">{error}</div>}
         </section>
 
         <footer className="drawer-actions">
           <button className="button button-secondary"><UserRound size={16} />Chọn người phụ trách</button>
-          {advance && <button className="button button-primary" onClick={() => updateStatus(current.id, advance)}><CheckCircle2 size={16} />Chuyển sang {statusLabels[advance].toLowerCase()}</button>}
+          {advance && <button className="button button-primary" disabled={busy} onClick={() => void advanceStatus()}><CheckCircle2 size={16} />Chuyển sang {statusLabels[advance].toLowerCase()}</button>}
         </footer>
       </aside>
     </div>

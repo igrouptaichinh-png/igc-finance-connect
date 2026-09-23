@@ -20,7 +20,7 @@ export function DashboardPage() {
     : isApprover
       ? { to: '/approvals', label: 'Xem đề xuất cần đánh giá', icon: <CheckSquare2 size={18} /> }
       : { to: '/queue', label: 'Xem ý kiến mới', icon: <Inbox size={18} /> }
-  const visibleRequests = isRequester ? requests.filter((item) => item.requester === user.fullName) : requests
+  const visibleRequests = isRequester ? requests.filter((item) => item.contributorId === user?.id) : requests
   const stats = useMemo(() => ({
     open: visibleRequests.filter((item) => !['Hoàn tất', 'Từ chối'].includes(item.status)).length,
     waiting: visibleRequests.filter((item) => item.status === 'Chờ phê duyệt').length,
@@ -28,6 +28,11 @@ export function DashboardPage() {
     done: visibleRequests.filter((item) => item.status === 'Hoàn tất').length,
   }), [visibleRequests])
   const active = visibleRequests.filter((item) => !['Hoàn tất', 'Từ chối'].includes(item.status))
+  const topCategory = useMemo(() => {
+    const counts = new Map<string, number>()
+    visibleRequests.forEach((item) => counts.set(item.category, (counts.get(item.category) || 0) + 1))
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]
+  }, [visibleRequests])
   const stageCounts = [
     { label: 'Mới chia sẻ', value: visibleRequests.filter((item) => item.status === 'Mới').length },
     { label: 'Đã ghi nhận', value: visibleRequests.filter((item) => item.status === 'Đang tiếp nhận').length },
@@ -51,10 +56,10 @@ export function DashboardPage() {
       </section>
 
       <section className="metric-grid">
-        <article className="metric-card"><div className="metric-icon blue"><Inbox size={20} /></div><div><span>Đang trao đổi</span><strong className="num">{stats.open}</strong><small><TrendingUp size={13} />2 ý kiến mới hôm nay</small></div></article>
+        <article className="metric-card"><div className="metric-icon blue"><Inbox size={20} /></div><div><span>Đang trao đổi</span><strong className="num">{stats.open}</strong><small><TrendingUp size={13} />{visibleRequests.filter((item) => new Date(item.createdAt).toDateString() === new Date().toDateString()).length} ý kiến mới hôm nay</small></div></article>
         <article className="metric-card"><div className="metric-icon amber"><Clock3 size={20} /></div><div><span>Đang đánh giá</span><strong className="num">{stats.waiting}</strong><small>Đang cân nhắc khả năng áp dụng</small></div></article>
         <article className="metric-card"><div className="metric-icon red"><AlertCircle size={20} /></div><div><span>Chậm phản hồi</span><strong className="num">{stats.overdue}</strong><small className="bad-text"><TimerReset size={13} />Cần chủ động trao đổi</small></div></article>
-        <article className="metric-card"><div className="metric-icon green"><CheckCircle2 size={20} /></div><div><span>Đã phản hồi tuần này</span><strong className="num">{stats.done + 11}</strong><small>92% phản hồi đúng hẹn</small></div></article>
+        <article className="metric-card"><div className="metric-icon green"><CheckCircle2 size={20} /></div><div><span>Đã phản hồi</span><strong className="num">{stats.done}</strong><small>{stats.done ? `${Math.round(visibleRequests.filter((item) => item.status === 'Hoàn tất' && new Date(item.updatedAt) <= new Date(item.dueAt)).length / stats.done * 100)}% phản hồi đúng hẹn` : 'Chưa có dữ liệu phản hồi'}</small></div></article>
       </section>
 
       <section className="dashboard-grid">
@@ -74,7 +79,7 @@ export function DashboardPage() {
       </section>
 
       <section className="insight-strip">
-        <div><span>{isRequester ? 'Gợi ý đóng góp' : 'Góc nhìn cải tiến'}</span><strong>{isRequester ? 'Một ví dụ thực tế sẽ giúp ý kiến của bạn dễ được thấu hiểu hơn.' : 'Chủ đề “Hóa đơn & chứng từ” đang nhận được nhiều góp ý nhất.'}</strong><p>{isRequester ? 'Hãy chia sẻ bối cảnh, điều chưa thuận tiện và lợi ích bạn mong muốn.' : 'Có thể mở một buổi trao đổi ngắn để cùng các phòng ban làm rõ những điểm chung.'}</p></div><Link to={isRequester ? '/community' : '/reports'} className="button button-secondary">{isRequester ? 'Khám phá ý kiến khác' : 'Xem phân tích chi tiết'}</Link>
+        <div><span>{isRequester ? 'Gợi ý đóng góp' : 'Góc nhìn cải tiến'}</span><strong>{isRequester ? 'Một ví dụ thực tế sẽ giúp ý kiến của bạn dễ được thấu hiểu hơn.' : topCategory ? `Chủ đề “${topCategory[0]}” hiện có ${topCategory[1]} ý kiến.` : 'Chưa có dữ liệu để xác định chủ đề nổi bật.'}</strong><p>{isRequester ? 'Hãy chia sẻ bối cảnh, điều chưa thuận tiện và lợi ích bạn mong muốn.' : topCategory ? 'Có thể mở một buổi trao đổi ngắn để cùng các phòng ban làm rõ những điểm chung.' : 'Dữ liệu sẽ được tổng hợp ngay khi có ý kiến đầu tiên.'}</p></div><Link to={isRequester ? '/community' : '/reports'} className="button button-secondary">{isRequester ? 'Khám phá ý kiến khác' : 'Xem phân tích chi tiết'}</Link>
       </section>
       <RequestDetailDrawer request={selected} onClose={() => setSelected(null)} />
     </>
