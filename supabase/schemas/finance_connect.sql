@@ -34,6 +34,8 @@ create table public.contribution_topics (
   description text not null default '',
   response_hours smallint not null check (response_hours between 1 and 720),
   requires_review boolean not null default false,
+  workflow_steps text[] not null default array['Ghi nhận ý kiến', 'Trao đổi và làm rõ', 'Phản hồi kết quả']::text[]
+    constraint contribution_topics_workflow_steps_check check (cardinality(workflow_steps) between 2 and 8),
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -200,7 +202,36 @@ alter table public.improvements enable row level security;
 create policy "authenticated users read departments"
 on public.departments for select to authenticated using (is_active = true);
 create policy "authenticated users read topics"
-on public.contribution_topics for select to authenticated using (is_active = true);
+on public.contribution_topics for select to authenticated
+using (
+  is_active = true
+  or exists (
+    select 1 from public.profiles p
+    where p.user_id = (select auth.uid()) and p.is_active and p.role = 'finance_admin'
+  )
+);
+create policy "finance admins create topics"
+on public.contribution_topics for insert to authenticated
+with check (
+  exists (
+    select 1 from public.profiles p
+    where p.user_id = (select auth.uid()) and p.is_active and p.role = 'finance_admin'
+  )
+);
+create policy "finance admins update topics"
+on public.contribution_topics for update to authenticated
+using (
+  exists (
+    select 1 from public.profiles p
+    where p.user_id = (select auth.uid()) and p.is_active and p.role = 'finance_admin'
+  )
+)
+with check (
+  exists (
+    select 1 from public.profiles p
+    where p.user_id = (select auth.uid()) and p.is_active and p.role = 'finance_admin'
+  )
+);
 create policy "authenticated users read active directory"
 on public.profiles for select to authenticated using (is_active = true);
 
@@ -359,7 +390,8 @@ revoke all on function public.handle_new_user() from public, anon, authenticated
 revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
 
 grant usage on schema public to authenticated;
-grant select on public.departments, public.profiles, public.contribution_topics to authenticated;
+grant select on public.departments, public.profiles to authenticated;
+grant select, insert, update on public.contribution_topics to authenticated;
 grant select, insert, update on public.contributions to authenticated;
 grant select, insert on public.contribution_comments, public.contribution_attachments to authenticated;
 grant select, insert, delete on public.contribution_votes to authenticated;

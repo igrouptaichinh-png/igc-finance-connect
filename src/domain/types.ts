@@ -71,9 +71,12 @@ export interface CreateRequestInput {
 }
 
 export interface RequestTypeDefinition {
+  id: number
+  code: string
   category: RequestCategory
   name: string
   slaHours: number
   requiresApproval: boolean
   description: string
+  workflowSteps: string[]
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { RequestCategory, RequestPriority } from '../domain/types'
 import { useRequests } from '../features/requests/RequestContext'
 import { useAuth } from '../features/auth/AuthContext'
+import { validateContribution } from '../features/requests/validation'
 
 const categoryIcons: Record<RequestCategory, string> = {
   'Thanh toán': '₫', 'Tạm ứng & hoàn ứng': '⇄', 'Ngân sách': '◔',
@@ -37,9 +38,20 @@ export function NewRequestPage() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (step < 3) { setStep(step + 1); return }
-    setSubmitting(true)
     setError('')
+    if (step === 1) {
+      if (!selectedType) { setError('Vui lòng chọn một chủ đề đang hoạt động.'); return }
+      setStep(2)
+      return
+    }
+    const validationError = validateContribution({ title, description, expectedBenefit })
+    if (validationError) {
+      setError(validationError)
+      if (step === 3) setStep(2)
+      return
+    }
+    if (step === 2) { setStep(3); return }
+    setSubmitting(true)
     try {
       const request = await createRequest({
         title, description, category, requestType: selectedRequestType, department: user?.department || '', priority,
@@ -72,9 +84,9 @@ export function NewRequestPage() {
           {step === 2 && <div className="form-step">
             <div className="form-step-head"><h2>Nội dung đóng góp</h2><p>Chia sẻ tình huống thực tế và điều bạn mong muốn được cải thiện.</p></div>
             <div className="form-grid">
-              <label className="field full-field"><span>Tiêu đề ý kiến <b>*</b></span><input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ví dụ: Đề xuất đơn giản hóa bước đối chiếu chứng từ" /></label>
-              <label className="field full-field"><span>Bối cảnh hoặc điểm chưa thuận tiện <b>*</b></span><textarea required rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Điều gì đang xảy ra, ai bị ảnh hưởng và vì sao bạn muốn chia sẻ ý kiến này?" /><small>{description.length}/1.500 ký tự</small></label>
-              <label className="field full-field"><span>Đề xuất và lợi ích kỳ vọng</span><textarea rows={3} value={expectedBenefit} onChange={(event) => setExpectedBenefit(event.target.value)} placeholder="Bạn mong muốn thay đổi điều gì và thay đổi đó sẽ giúp ích như thế nào?" /></label>
+              <label className="field full-field"><span>Tiêu đề ý kiến <b>*</b></span><input required minLength={5} maxLength={180} value={title} onChange={(event) => { setTitle(event.target.value); setError('') }} placeholder="Ví dụ: Đề xuất đơn giản hóa bước đối chiếu chứng từ" /><small>{title.trim().length}/180 ký tự · Tối thiểu 5</small></label>
+              <label className="field full-field"><span>Bối cảnh hoặc điểm chưa thuận tiện <b>*</b></span><textarea required minLength={10} maxLength={5000} rows={4} value={description} onChange={(event) => { setDescription(event.target.value); setError('') }} placeholder="Điều gì đang xảy ra, ai bị ảnh hưởng và vì sao bạn muốn chia sẻ ý kiến này?" /><small>{description.trim().length}/5.000 ký tự · Tối thiểu 10</small></label>
+              <label className="field full-field"><span>Đề xuất và lợi ích kỳ vọng</span><textarea maxLength={3000} rows={3} value={expectedBenefit} onChange={(event) => { setExpectedBenefit(event.target.value); setError('') }} placeholder="Bạn mong muốn thay đổi điều gì và thay đổi đó sẽ giúp ích như thế nào?" /><small>{expectedBenefit.trim().length}/3.000 ký tự</small></label>
               <label className="field"><span>Phòng ban</span><input value={user?.department || ''} disabled /></label>
               <label className="field"><span>Mức độ ảnh hưởng</span><select value={priority} onChange={(event) => setPriority(event.target.value as RequestPriority)}><option value="Thường">Thông thường</option><option value="Ưu tiên">Ảnh hưởng đáng kể</option><option value="Khẩn">Cần lưu ý sớm</option></select></label>
               <label className="field"><span>Phạm vi chia sẻ</span><select value={visibility} onChange={(event) => setVisibility(event.target.value as typeof visibility)}><option>Công khai nội bộ</option><option>Chỉ phòng ban</option><option>Chỉ Phòng Tài chính</option></select></label>
@@ -90,10 +102,10 @@ export function NewRequestPage() {
             <label className="confirm-check"><input required type="checkbox" /><span>Tôi xác nhận nội dung chia sẻ mang tính xây dựng và thông tin đã cung cấp là phù hợp.</span></label>
           </div>}
 
-          {error && <div className="account-notice error">{error}</div>}
-          <footer className="form-actions"><button type="button" className="button button-secondary" onClick={() => step === 1 ? navigate('/') : setStep(step - 1)}><ArrowLeft size={16} />{step === 1 ? 'Hủy' : 'Quay lại'}</button><button className="button button-primary" disabled={submitting || isLoading || !selectedType || (step === 2 && (!title || !description))}>{submitting ? 'Đang lưu...' : step < 3 ? <>Tiếp tục<ArrowRight size={16} /></> : <>Chia sẻ ý kiến<Send size={16} /></>}</button></footer>
+          {error && <div className="account-notice error" role="alert">{error}</div>}
+          <footer className="form-actions"><button type="button" className="button button-secondary" onClick={() => { setError(''); if (step === 1) navigate('/'); else setStep(step - 1) }}><ArrowLeft size={16} />{step === 1 ? 'Hủy' : 'Quay lại'}</button><button className="button button-primary" disabled={submitting || isLoading || !selectedType}>{submitting ? 'Đang lưu...' : step < 3 ? <>Tiếp tục<ArrowRight size={16} /></> : <>Chia sẻ ý kiến<Send size={16} /></>}</button></footer>
         </form>
-        <aside className="wizard-help">{selectedType && <div className="help-card"><span>Hành trình trao đổi</span><h3>{selectedType.name}</h3><ol><li className="active">Ghi nhận ý kiến</li><li>Trao đổi và làm rõ</li>{selectedType.requiresApproval && <li>Đánh giá đề xuất</li>}<li>Phản hồi kết quả</li></ol><div className="sla-box"><strong>{selectedType.slaHours} giờ</strong><span>Thời gian phản hồi dự kiến</span></div></div>}<div className="tip-card"><Info size={17} /><p><strong>Gợi ý chia sẻ:</strong> Mô tả tình huống thực tế và lợi ích bạn kỳ vọng để Phòng Tài chính dễ trao đổi hơn.</p></div></aside>
+        <aside className="wizard-help">{selectedType && <div className="help-card"><span>Hành trình trao đổi</span><h3>{selectedType.name}</h3><ol>{selectedType.workflowSteps.map((workflowStep, index) => <li className={index === 0 ? 'active' : ''} key={`${workflowStep}-${index}`}>{workflowStep}</li>)}</ol><div className="sla-box"><strong>{selectedType.slaHours} giờ</strong><span>Thời gian phản hồi dự kiến</span></div></div>}<div className="tip-card"><Info size={17} /><p><strong>Gợi ý chia sẻ:</strong> Mô tả tình huống thực tế và lợi ích bạn kỳ vọng để Phòng Tài chính dễ trao đổi hơn.</p></div></aside>
       </div>
     </>
   )

@@ -3,6 +3,7 @@ import type { CreateRequestInput, FinanceRequest, RequestCategory, RequestPriori
 import { statusLabels } from '../../lib/copy'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
+import { friendlyContributionError, validateContribution } from './validation'
 
 const statusFromDb: Record<string, RequestStatus> = {
   new: 'Mới', accepted: 'Đang tiếp nhận', needs_information: 'Chờ bổ sung',
@@ -24,7 +25,7 @@ const progressByStatus: Record<RequestStatus, number> = {
   'Đang xử lý': 62, 'Hoàn tất': 100, 'Từ chối': 100,
 }
 
-interface TopicRow { id: number; category: string; name: string; description: string; response_hours: number; requires_review: boolean }
+interface TopicRow { id: number; code: string; category: string; name: string; description: string; response_hours: number; requires_review: boolean; workflow_steps: string[] | null }
 interface ProfileRow { user_id: string; full_name: string }
 interface DepartmentRow { id: number; name: string }
 interface CommentRow { id: number; contribution_id: string; author_id: string; body: string; created_at: string }
@@ -78,7 +79,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
     const [contributionResult, profileResult, topicResult, departmentResult, commentResult, voteResult, eventResult, attachmentResult] = await Promise.all([
       supabase.from('contributions').select('*').order('created_at', { ascending: false }),
       supabase.from('profiles').select('user_id, full_name'),
-      supabase.from('contribution_topics').select('id, category, name, description, response_hours, requires_review').eq('is_active', true).order('id'),
+      supabase.from('contribution_topics').select('id, code, category, name, description, response_hours, requires_review, workflow_steps').eq('is_active', true).order('id'),
       supabase.from('departments').select('id, name').eq('is_active', true),
       supabase.from('contribution_comments').select('id, contribution_id, author_id, body, created_at').order('created_at'),
       supabase.from('contribution_votes').select('contribution_id, voter_id'),
@@ -139,14 +140,17 @@ export function RequestProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   const topics = useMemo<RequestTypeDefinition[]>(() => topicRows.map((item) => ({
-    category: categoryFromDb[item.category] || 'Thanh toán', name: item.name, slaHours: item.response_hours,
-    requiresApproval: item.requires_review, description: item.description,
+    id: item.id, code: item.code, category: categoryFromDb[item.category] || 'Thanh toán', name: item.name,
+    slaHours: item.response_hours, requiresApproval: item.requires_review, description: item.description,
+    workflowSteps: item.workflow_steps?.length ? item.workflow_steps : ['Ghi nhận ý kiến', 'Trao đổi và làm rõ', 'Phản hồi kết quả'],
   })), [topicRows])
 
   const value = useMemo<RequestContextValue>(() => ({
     requests, topics, isLoading, error, refresh,
     async createRequest(input) {
       if (!supabase || !user?.departmentId) throw new Error('Tài khoản chưa được gán phòng ban.')
+      const validationError = validateContribution(input)
+      if (validationError) throw new Error(validationError)
       const topic = topicRows.find((item) => item.name === input.requestType)
       if (!topic) throw new Error('Chủ đề đã chọn không còn hoạt động.')
       const now = new Date()
@@ -157,7 +161,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         priority: priorityToDb[input.priority], visibility: visibilityToDb[input.visibility || 'Công khai nội bộ'],
         related_amount: input.amount ?? null, currency: input.currency, response_due_at: input.dueAt,
       }).select('id, created_at, updated_at').single()
-      if (insertError) throw new Error(insertError.message)
+      if (insertError) throw new Error(friendlyContributionError(insertError.message))
       await refresh()
       return {
         ...input, id: data.id, code, contributorId: user.id, requester: user.fullName, department: user.department,
