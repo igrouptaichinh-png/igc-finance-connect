@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  BarChart3, Bell, BookOpenText, CheckSquare2, ChevronDown, CircleHelp,
+  BarChart3, BookOpenText, CheckSquare2, ChevronDown, CircleHelp,
   FilePlus2, Inbox, LayoutDashboard, LogOut, Menu, Moon, Search, Settings2,
   ShieldCheck, Sparkles, Sun, TicketCheck, UsersRound, X,
 } from 'lucide-react'
@@ -9,6 +9,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../features/auth/AuthContext'
 import { roleLabels, type AppRole } from '../features/auth/types'
 import { useRequests } from '../features/requests/RequestContext'
+import { NotificationMenu } from '../features/notifications/NotificationMenu'
 
 interface NavItem { to: string; label: string; icon: LucideIcon; roles: AppRole[]; accent?: boolean; count?: number }
 interface NavGroup { section: string; items: NavItem[] }
@@ -97,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="topbar-actions">
             <label className="global-search"><Search size={17} /><input aria-label="Tìm kiếm toàn cục" placeholder="Tìm mã hoặc chủ đề..." /><kbd>Ctrl K</kbd></label>
             <button className="icon-button" title="Đổi giao diện" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-            <button className="icon-button notification-button" aria-label="Thông báo"><Bell size={18} /><i /></button>
+            <NotificationMenu />
             <div className="user-menu-wrap">
               <button className={`user-menu ${userMenuOpen ? 'open' : ''}`} onClick={() => setUserMenuOpen((value) => !value)} aria-expanded={userMenuOpen}><span className="avatar">{initials}</span><span><strong>{user.fullName}</strong><small>{roleLabels[user.role]}</small></span><ChevronDown size={15} /></button>
               {userMenuOpen && <div className="user-popover">

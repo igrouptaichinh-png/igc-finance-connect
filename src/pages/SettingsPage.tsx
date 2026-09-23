@@ -4,9 +4,10 @@ import type { RequestCategory } from '../domain/types'
 import { useRequests } from '../features/requests/RequestContext'
 import { createContributionTopic, listContributionTopics, setContributionTopicActive, updateContributionTopic, type ContributionTopic, type TopicInput } from '../features/settings/api'
 import { GroupsSettings } from '../features/settings/GroupsSettings'
+import { NotificationsSettings } from '../features/settings/NotificationsSettings'
 import { isSupabaseConfigured } from '../lib/supabase'
 
-type SettingsSection = 'topics' | 'workflow' | 'groups'
+type SettingsSection = 'topics' | 'workflow' | 'groups' | 'notifications'
 
 const categories: RequestCategory[] = ['Thanh toán', 'Tạm ứng & hoàn ứng', 'Ngân sách', 'Hóa đơn & chứng từ', 'Mã dữ liệu tài chính', 'Báo cáo & đối soát', 'Tư vấn chính sách']
 
@@ -139,11 +140,12 @@ export function SettingsPage() {
           <button type="button" className={section === 'topics' ? 'active' : ''} onClick={() => selectSection('topics')}><SlidersHorizontal size={18} /><span><strong>Chủ đề đóng góp</strong><small>Nội dung hiển thị trên biểu mẫu</small></span><ChevronRight size={15} /></button>
           <button type="button" className={section === 'workflow' ? 'active' : ''} onClick={() => selectSection('workflow')}><GitBranch size={18} /><span><strong>Quy trình phản hồi</strong><small>Các bước, SLA và đánh giá</small></span><ChevronRight size={15} /></button>
           <button type="button" className={section === 'groups' ? 'active' : ''} onClick={() => selectSection('groups')}><UsersRound size={18} /><span><strong>Nhóm & phân quyền</strong><small>Nhóm, thành viên và phân công</small></span><ChevronRight size={15} /></button>
-          {[[BellRing, 'Thông báo', 'Sắp được bổ sung'], [Database, 'Kết nối dữ liệu', 'Supabase đang hoạt động'], [LockKeyhole, 'Bảo mật & nhật ký', 'RLS và audit trail']].map(([Icon, title, text]) => { const Component = Icon as typeof UsersRound; return <button type="button" className="settings-nav-disabled" disabled key={String(title)}><Component size={18} /><span><strong>{String(title)}</strong><small>{String(text)}</small></span><ChevronRight size={15} /></button> })}
+          <button type="button" className={section === 'notifications' ? 'active' : ''} onClick={() => selectSection('notifications')}><BellRing size={18} /><span><strong>Thông báo</strong><small>Sự kiện và người nhận</small></span><ChevronRight size={15} /></button>
+          {[[Database, 'Kết nối dữ liệu', 'Supabase đang hoạt động'], [LockKeyhole, 'Bảo mật & nhật ký', 'RLS và audit trail']].map(([Icon, title, text]) => { const Component = Icon as typeof UsersRound; return <button type="button" className="settings-nav-disabled" disabled key={String(title)}><Component size={18} /><span><strong>{String(title)}</strong><small>{String(text)}</small></span><ChevronRight size={15} /></button> })}
         </aside>
 
         <div className="settings-main content-card">
-          {section === 'groups' ? <GroupsSettings /> : <>
+          {section === 'groups' ? <GroupsSettings /> : section === 'notifications' ? <NotificationsSettings /> : <>
           <header className="card-head">
             <div><h2>{section === 'topics' ? 'Chủ đề đóng góp' : 'Quy trình phản hồi'}</h2><p>{section === 'topics' ? 'Chỉnh tên, mô tả và nhóm nội dung mà nhân viên nhìn thấy.' : 'Thiết lập các bước xử lý, thời gian phản hồi và yêu cầu đánh giá.'}</p></div>
             <span>{activeCount}/{topics.length} chủ đề đang hoạt động</span>
