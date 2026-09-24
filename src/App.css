@@ -343,6 +343,14 @@ body { color: var(--ink); background: var(--bg); }
 .heading-stat strong, .approval-summary strong { font-size: 10px; }
 .heading-stat small, .approval-summary small { color: var(--ink-3); font-size: 8.5px; }
 .queue-toolbar { padding: 0 0 12px; border: 0; }
+.queue-view-switcher { margin: -2px 0 11px; padding: 6px; display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 1px 3px rgba(9,54,112,.04); }
+.queue-view-switcher > span { padding-left: 6px; color: var(--ink-3); font-size: 8.5px; font-weight: 800; white-space: nowrap; }
+.queue-view-switcher > small { margin-left: auto; padding-right: 7px; color: var(--ink-3); font-size: 8px; white-space: nowrap; }
+.queue-view-options { display: flex; align-items: center; gap: 4px; }
+.queue-view-options button { min-height: 32px; padding: 0 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 6px; font: 800 9px Roboto, sans-serif; white-space: nowrap; cursor: pointer; transition: color .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.queue-view-options button:hover { color: var(--blue); background: var(--blue-soft); }
+.queue-view-options button:focus-visible { outline: 2px solid color-mix(in srgb, var(--blue) 65%, white); outline-offset: 2px; }
+.queue-view-options button.active { color: #fff; background: var(--blue); border-color: var(--blue); box-shadow: 0 2px 5px rgba(5,72,140,.18); }
 .queue-summary { margin-bottom: 10px; display: flex; gap: 16px; color: var(--ink-3); font-size: 9px; font-weight: 700; }
 .queue-summary span { display: flex; align-items: center; gap: 5px; }
 .queue-summary i { width: 7px; height: 7px; border-radius: 50%; }
@@ -368,6 +376,10 @@ body { color: var(--ink); background: var(--bg); }
 .kanban-progress i { height: 100%; display: block; background: var(--blue); border-radius: inherit; }
 .kanban-card select { width: 100%; margin-top: 9px; padding: 6px 7px; color: var(--ink-2); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 5px; font-size: 8.5px; }
 .kanban-empty { padding: 25px 5px; color: var(--ink-3); font-size: 8.5px; text-align: center; }
+.queue-board-empty { min-height: 210px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 7px; color: var(--ink-3); background: var(--surface); border: 1px dashed var(--line); border-radius: 9px; }
+.queue-board-empty svg { color: var(--blue); }
+.queue-board-empty strong { color: var(--ink); font-size: 10.5px; }
+.queue-board-empty span { font-size: 8.5px; }
 .queue-footnote { margin-top: 11px; display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 8.5px; }
 .approval-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
 .approval-list { display: flex; flex-direction: column; gap: 10px; }
@@ -662,6 +674,11 @@ body { color: var(--ink); background: var(--bg); }
   .toolbar-search { width: 100%; }
   .list-toolbar > div, .queue-toolbar > div { width: 100%; }
   .list-toolbar .button, .list-toolbar .select-control, .queue-toolbar .button { flex: 1; }
+  .queue-view-switcher { align-items: flex-start; flex-direction: column; overflow: hidden; }
+  .queue-view-switcher > span { padding-top: 3px; }
+  .queue-view-options { width: 100%; overflow-x: auto; padding: 1px 0 4px; }
+  .queue-view-options button { flex: 0 0 auto; }
+  .queue-view-switcher > small { margin: 0; padding: 0 6px 3px; }
   .summary-tabs { overflow-x: auto; }
   .summary-tabs button { flex: 0 0 auto; }
   .stepper span { display: none; }
