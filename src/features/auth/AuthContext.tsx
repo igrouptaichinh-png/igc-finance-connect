@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { isSupabaseConfigured, supabase } from '../../lib/supabase'
+import { clearAuthCallbackFromUrl, initialAuthCallback, isSupabaseConfigured, supabase } from '../../lib/supabase'
 import type { AppRole, AppUser } from './types'
 
 interface AuthContextValue {
@@ -20,6 +20,7 @@ function friendlyAuthError(message: string) {
   const normalized = message.toLowerCase()
   if (normalized.includes('invalid login credentials')) return 'Email hoặc mật khẩu chưa đúng.'
   if (normalized.includes('email not confirmed')) return 'Email chưa được xác nhận. Vui lòng mở email mời từ hệ thống.'
+  if (normalized.includes('expired') || normalized.includes('invalid token') || normalized.includes('otp_expired')) return 'Liên kết đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu gửi lại email mới.'
   if (normalized.includes('rate limit')) return 'Bạn đã thử quá nhiều lần. Vui lòng chờ một chút rồi thử lại.'
   return 'Không thể đăng nhập lúc này. Vui lòng thử lại hoặc liên hệ Finance Admin.'
 }
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [realUser, setRealUser] = useState<AppUser | null>(null)
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured)
   const [authMessage, setAuthMessage] = useState('')
+  const callbackIntent = useRef(initialAuthCallback.intent)
   const user = realUser
 
   const syncSession = useCallback(async (authUser: User | null, forcePasswordSetup = false) => {
@@ -87,12 +89,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true
-    void supabase.auth.getSession().then(({ data }) => {
-      if (mounted) void syncSession(data.session?.user || null)
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!mounted) return
+      if (error) {
+        setAuthMessage(friendlyAuthError(error.message))
+        clearAuthCallbackFromUrl()
+        setIsLoading(false)
+        return
+      }
+      const authUser = data.session?.user || null
+      const needsPasswordSetup = callbackIntent.current !== null
+      if (!authUser && needsPasswordSetup) {
+        callbackIntent.current = null
+        setAuthMessage(initialAuthCallback.error
+          ? friendlyAuthError(initialAuthCallback.error)
+          : 'Không thể xác nhận liên kết. Liên kết có thể đã hết hạn hoặc đã được sử dụng; vui lòng yêu cầu gửi lại email mới.')
+        clearAuthCallbackFromUrl()
+        setIsLoading(false)
+        return
+      }
+      if (authUser && needsPasswordSetup) {
+        clearAuthCallbackFromUrl()
+      }
+      void syncSession(authUser, needsPasswordSetup)
     })
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (mounted) window.setTimeout(() => void syncSession(session?.user || null, event === 'PASSWORD_RECOVERY'), 0)
+      if (!mounted) return
+      const needsPasswordSetup = event === 'PASSWORD_RECOVERY' || callbackIntent.current !== null
+      window.setTimeout(() => {
+        if (session?.user && needsPasswordSetup) {
+          clearAuthCallbackFromUrl()
+        }
+        void syncSession(session?.user || null, needsPasswordSetup)
+      }, 0)
     })
+
+    if (initialAuthCallback.error) {
+      setAuthMessage(friendlyAuthError(initialAuthCallback.error))
+      clearAuthCallbackFromUrl()
+    }
     return () => {
       mounted = false
       listener.subscription.unsubscribe()
@@ -125,15 +160,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async logout() {
       setRealUser(null)
+      callbackIntent.current = null
       if (supabase) await supabase.auth.signOut()
     },
     async updatePassword(password) {
       if (!supabase || realUser?.source !== 'supabase') return 'Phiên đăng nhập không hợp lệ.'
+      const pendingIntent = callbackIntent.current
+      callbackIntent.current = null
       const { data, error } = await supabase.auth.updateUser({
         password,
         data: { needs_password_setup: false },
       })
-      if (error) return error.message
+      if (error) {
+        callbackIntent.current = pendingIntent
+        return friendlyAuthError(error.message)
+      }
       await syncSession(data.user)
       return null
     },
