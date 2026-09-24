@@ -44,6 +44,7 @@ export interface FinanceRequest {
   priority: RequestPriority
   amount?: number
   currency: 'VND' | 'USD'
+  assigneeId?: string
   assignee?: string
   approver?: string
   progress: number

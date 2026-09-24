@@ -26,8 +26,9 @@ const progressByStatus: Record<RequestStatus, number> = {
 }
 
 interface TopicRow { id: number; code: string; category: string; name: string; description: string; response_hours: number; requires_review: boolean; workflow_steps: string[] | null }
-interface ProfileRow { user_id: string; full_name: string }
-interface DepartmentRow { id: number; name: string }
+interface ProfileRow { user_id: string; full_name: string; department_id: number | null; role: string; is_active: boolean }
+interface DepartmentRow { id: number; code: string; name: string }
+interface FinanceAssignee { id: string; fullName: string }
 interface CommentRow { id: number; contribution_id: string; author_id: string; body: string; created_at: string }
 interface EventRow { id: number; contribution_id: string; actor_id: string | null; event_type: string; detail: string; to_status: string | null; created_at: string }
 interface ContributionRow {
@@ -40,10 +41,12 @@ interface ContributionRow {
 interface RequestContextValue {
   requests: FinanceRequest[]
   topics: RequestTypeDefinition[]
+  assignees: FinanceAssignee[]
   isLoading: boolean
   error: string
   refresh: () => Promise<void>
   createRequest: (input: CreateRequestInput) => Promise<FinanceRequest>
+  assignRequest: (id: string, assigneeId: string | null) => Promise<void>
   updateStatus: (id: string, status: RequestStatus, detail?: string) => Promise<void>
   addComment: (id: string, message: string) => Promise<void>
   toggleVote: (id: string) => Promise<void>
@@ -57,13 +60,23 @@ function displayDate(value: string) {
 
 function eventAction(event: EventRow) {
   if (event.to_status && statusFromDb[event.to_status]) return `Cập nhật: ${statusLabels[statusFromDb[event.to_status]]}`
+  if (event.event_type === 'assignee_changed') return 'Đã cập nhật người phụ trách'
   return event.event_type.replaceAll('_', ' ')
+}
+
+function friendlyAssignmentError(message: string) {
+  const normalized = message.toLowerCase()
+  if (normalized.includes('finance_admin_required') || normalized.includes('permission denied')) return 'Chỉ Finance Admin mới được phân công người phụ trách.'
+  if (normalized.includes('invalid_finance_assignee')) return 'Người được chọn phải là tài khoản phụ trách đang hoạt động thuộc Khối Tài chính-Kế toán.'
+  if (normalized.includes('contribution_not_found')) return 'Không tìm thấy ý kiến cần phân công.'
+  return 'Không thể lưu người phụ trách. Vui lòng thử lại.'
 }
 
 export function RequestProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [requests, setRequests] = useState<FinanceRequest[]>([])
   const [topicRows, setTopicRows] = useState<TopicRow[]>([])
+  const [assignees, setAssignees] = useState<FinanceAssignee[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -71,6 +84,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
     if (!supabase || !user) {
       setRequests([])
       setTopicRows([])
+      setAssignees([])
       setIsLoading(false)
       return
     }
@@ -78,9 +92,9 @@ export function RequestProvider({ children }: { children: ReactNode }) {
     setError('')
     const [contributionResult, profileResult, topicResult, departmentResult, commentResult, voteResult, eventResult, attachmentResult] = await Promise.all([
       supabase.from('contributions').select('*').order('created_at', { ascending: false }),
-      supabase.from('profiles').select('user_id, full_name'),
+      supabase.from('profiles').select('user_id, full_name, department_id, role, is_active'),
       supabase.from('contribution_topics').select('id, code, category, name, description, response_hours, requires_review, workflow_steps').eq('is_active', true).order('id'),
-      supabase.from('departments').select('id, name').eq('is_active', true),
+      supabase.from('departments').select('id, code, name').eq('is_active', true),
       supabase.from('contribution_comments').select('id, contribution_id, author_id, body, created_at').order('created_at'),
       supabase.from('contribution_votes').select('contribution_id, voter_id'),
       supabase.from('contribution_events').select('id, contribution_id, actor_id, event_type, detail, to_status, created_at').order('created_at'),
@@ -105,8 +119,13 @@ export function RequestProvider({ children }: { children: ReactNode }) {
     const profileMap = new Map(profiles.map((item) => [item.user_id, item.full_name]))
     const topicMap = new Map(dbTopics.map((item) => [item.id, item]))
     const departmentMap = new Map(departments.map((item) => [item.id, item.name]))
+    const financeDepartmentIds = new Set(departments.filter((item) => item.code === 'FINANCE_ACCOUNTING').map((item) => item.id))
 
     setTopicRows(dbTopics)
+    setAssignees(profiles
+      .filter((item) => item.is_active && item.department_id !== null && financeDepartmentIds.has(item.department_id) && ['finance_agent', 'finance_admin'].includes(item.role))
+      .map((item) => ({ id: item.user_id, fullName: item.full_name }))
+      .sort((left, right) => left.fullName.localeCompare(right.fullName, 'vi')))
     setRequests(contributions.map((row) => {
       const topic = topicMap.get(row.topic_id)
       const rowComments = comments.filter((item) => item.contribution_id === row.id)
@@ -124,7 +143,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         department: departmentMap.get(row.department_id) || 'Chưa gán phòng ban', createdAt: row.created_at, updatedAt: row.updated_at,
         dueAt: row.response_due_at, status, priority: priorityFromDb[row.priority] || 'Thường',
         amount: row.related_amount === null ? undefined : Number(row.related_amount), currency: row.currency,
-        assignee: row.assignee_id ? profileMap.get(row.assignee_id) : undefined, approver: row.reviewer_id ? profileMap.get(row.reviewer_id) : undefined,
+        assigneeId: row.assignee_id || undefined, assignee: row.assignee_id ? profileMap.get(row.assignee_id) : undefined, approver: row.reviewer_id ? profileMap.get(row.reviewer_id) : undefined,
         progress: progressByStatus[status], attachments: attachments.filter((item) => item.contribution_id === row.id).length,
         expectedBenefit: row.expected_benefit || undefined, visibility: visibilityFromDb[row.visibility] || 'Công khai nội bộ',
         votes: votes.filter((item) => item.contribution_id === row.id).length, comments: rowComments.length,
@@ -146,7 +165,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
   })), [topicRows])
 
   const value = useMemo<RequestContextValue>(() => ({
-    requests, topics, isLoading, error, refresh,
+    requests, topics, assignees, isLoading, error, refresh,
     async createRequest(input) {
       if (!supabase || !user?.departmentId) throw new Error('Tài khoản chưa được gán phòng ban.')
       const validationError = validateContribution(input)
@@ -169,6 +188,16 @@ export function RequestProvider({ children }: { children: ReactNode }) {
         visibility: input.visibility || 'Công khai nội bộ', votes: 0, comments: 0, votedByCurrentUser: false,
         timeline: [{ id: `created-${data.id}`, actor: user.fullName, action: 'Đã chia sẻ ý kiến', detail: 'Ý kiến đã được ghi nhận và gửi đến Phòng Tài chính.', at: displayDate(data.created_at), tone: 'brand' }],
       }
+    },
+    async assignRequest(id, assigneeId) {
+      if (!supabase || !user) throw new Error('Phiên đăng nhập không hợp lệ.')
+      if (user.role !== 'finance_admin') throw new Error('Chỉ Finance Admin mới được phân công người phụ trách.')
+      const { error: assignmentError } = await supabase.rpc('assign_contribution', {
+        p_contribution_id: id,
+        p_assignee_id: assigneeId,
+      })
+      if (assignmentError) throw new Error(friendlyAssignmentError(assignmentError.message))
+      await refresh()
     },
     async updateStatus(id, status, detail) {
       if (!supabase || !user) throw new Error('Phiên đăng nhập không hợp lệ.')
@@ -196,7 +225,7 @@ export function RequestProvider({ children }: { children: ReactNode }) {
       if (voteError) throw new Error(voteError.message)
       await refresh()
     },
-  }), [error, isLoading, refresh, requests, topicRows, topics, user])
+  }), [assignees, error, isLoading, refresh, requests, topicRows, topics, user])
 
   return <RequestContext.Provider value={value}>{children}</RequestContext.Provider>
 }

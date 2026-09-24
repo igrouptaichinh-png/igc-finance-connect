@@ -264,6 +264,16 @@ body { color: var(--ink); background: var(--bg); }
 .comment-box { display: flex; align-items: flex-end; gap: 8px; }
 .comment-box textarea { min-height: 64px; flex: 1; padding: 9px; resize: vertical; color: var(--ink); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; outline: 0; font-size: 9.5px; }
 .drawer-actions { position: sticky; bottom: 0; margin-top: auto; padding: 13px 22px; display: flex; justify-content: flex-end; gap: 8px; background: color-mix(in srgb, var(--surface) 94%, transparent); border-top: 1px solid var(--line); backdrop-filter: blur(10px); }
+.assignment-popover { position: absolute; right: 22px; bottom: calc(100% + 8px); width: min(360px, calc(100vw - 44px)); padding: 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-float); }
+.assignment-popover > header { margin-bottom: 13px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.assignment-popover h3 { margin: 0 0 4px; font-size: 12px; }
+.assignment-popover header p, .assignment-empty { margin: 0; color: var(--ink-3); font-size: 11px; line-height: 1.45; }
+.assignment-popover label { display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); font-size: 11px; font-weight: 800; }
+.assignment-popover select { width: 100%; height: 40px; padding: 0 10px; color: var(--ink); background: var(--surface-soft); border: 1px solid var(--line); border-radius: 6px; outline: 0; font-size: 12px; }
+.assignment-popover select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 10%, transparent); }
+.assignment-empty { margin-top: 9px; color: var(--amber); }
+.assignment-actions { margin-top: 14px; display: flex; justify-content: flex-end; gap: 7px; }
+.drawer-success { margin-right: auto; align-self: center; color: var(--green); font-size: 11px; font-weight: 800; }
 
 /* Form wizard */
 .wizard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 275px; gap: 15px; align-items: start; }

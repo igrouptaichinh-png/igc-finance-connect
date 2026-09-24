@@ -5,6 +5,7 @@ import { formatDate, formatMoney } from '../lib/format'
 import { useRequests } from '../features/requests/RequestContext'
 import { PriorityBadge, StatusBadge } from './StatusBadge'
 import { statusLabels } from '../lib/copy'
+import { useAuth } from '../features/auth/AuthContext'
 
 const nextStatus: Partial<Record<RequestStatus, RequestStatus>> = {
   'Mới': 'Đang tiếp nhận',
@@ -15,18 +16,27 @@ const nextStatus: Partial<Record<RequestStatus, RequestStatus>> = {
 }
 
 export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequest | null; onClose: () => void }) {
-  const { requests, updateStatus, addComment } = useRequests()
+  const { user } = useAuth()
+  const { requests, assignees, assignRequest, updateStatus, addComment } = useRequests()
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [assignmentError, setAssignmentError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [showAssignment, setShowAssignment] = useState(false)
+  const [draftAssigneeId, setDraftAssigneeId] = useState('')
   const current = requests.find((item) => item.id === request?.id) ?? request
 
   useEffect(() => {
     if (!request) return
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      if (showAssignment) setShowAssignment(false)
+      else onClose()
+    }
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
-  }, [request, onClose])
+  }, [request, onClose, showAssignment])
 
   if (!current) return null
   const advance = nextStatus[current.status]
@@ -35,6 +45,7 @@ export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequ
     if (!comment.trim()) return
     setBusy(true)
     setError('')
+    setNotice('')
     try {
       await addComment(current.id, comment.trim())
       setComment('')
@@ -49,9 +60,33 @@ export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequ
     if (!advance) return
     setBusy(true)
     setError('')
+    setNotice('')
     try { await updateStatus(current.id, advance) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Không thể cập nhật trạng thái.') }
     finally { setBusy(false) }
+  }
+
+  const openAssignment = () => {
+    setDraftAssigneeId(current.assigneeId || '')
+    setAssignmentError('')
+    setNotice('')
+    setShowAssignment(true)
+  }
+
+  const saveAssignment = async () => {
+    setBusy(true)
+    setAssignmentError('')
+    setNotice('')
+    try {
+      await assignRequest(current.id, draftAssigneeId || null)
+      const selectedAssignee = assignees.find((item) => item.id === draftAssigneeId)
+      setNotice(selectedAssignee ? `Đã phân công ${selectedAssignee.fullName}.` : 'Đã bỏ phân công người phụ trách.')
+      setShowAssignment(false)
+    } catch (cause) {
+      setAssignmentError(cause instanceof Error ? cause.message : 'Không thể lưu người phụ trách.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -110,7 +145,15 @@ export function RequestDetailDrawer({ request, onClose }: { request: FinanceRequ
         </section>
 
         <footer className="drawer-actions">
-          <button className="button button-secondary"><UserRound size={16} />Chọn người phụ trách</button>
+          {showAssignment && <div className="assignment-popover" role="group" aria-labelledby="assignment-title">
+            <header><div><h3 id="assignment-title">Chọn người phụ trách</h3><p>Chỉ hiển thị tài khoản phụ trách đang hoạt động thuộc Khối Tài chính-Kế toán.</p></div><button type="button" className="icon-button" aria-label="Đóng chọn người phụ trách" onClick={() => setShowAssignment(false)}><X size={17} /></button></header>
+            <label htmlFor="finance-assignee"><span>Người phụ trách</span><select id="finance-assignee" autoFocus value={draftAssigneeId} onChange={(event) => setDraftAssigneeId(event.target.value)}><option value="">Chưa phân công</option>{assignees.map((assignee) => <option value={assignee.id} key={assignee.id}>{assignee.fullName}</option>)}</select></label>
+            {!assignees.length && <p className="assignment-empty">Chưa có tài khoản Người phụ trách hoặc Finance Admin trong Khối Tài chính-Kế toán.</p>}
+            {assignmentError && <div className="account-notice error" role="alert">{assignmentError}</div>}
+            <div className="assignment-actions"><button type="button" className="button button-secondary" onClick={() => setShowAssignment(false)}>Hủy</button><button type="button" className="button button-primary" disabled={busy || draftAssigneeId === (current.assigneeId || '')} onClick={() => void saveAssignment()}>{busy ? 'Đang lưu...' : 'Lưu phân công'}</button></div>
+          </div>}
+          {notice && <span className="drawer-success" role="status">{notice}</span>}
+          {user?.role === 'finance_admin' && <button type="button" className="button button-secondary" aria-expanded={showAssignment} onClick={openAssignment}><UserRound size={16} />{current.assignee ? 'Đổi người phụ trách' : 'Chọn người phụ trách'}</button>}
           {advance && <button className="button button-primary" disabled={busy} onClick={() => void advanceStatus()}><CheckCircle2 size={16} />Chuyển sang {statusLabels[advance].toLowerCase()}</button>}
         </footer>
       </aside>
