@@ -1,13 +1,17 @@
-insert into public.departments (code, name) values
-  ('FINANCE', 'Phòng Tài chính'),
-  ('SALES', 'Kinh doanh'),
-  ('LOGISTICS', 'Kho Vận & Logistics'),
-  ('PURCHASE', 'Mua hàng'),
-  ('HR', 'Nhân sự'),
-  ('IT', 'Công nghệ thông tin'),
-  ('PRODUCTION', 'Sản xuất'),
-  ('PROJECT', 'Ban Dự án')
-on conflict (code) do nothing;
+insert into public.departments (code, name, is_active) values
+  ('RAW_MATERIAL_SUPPLY', 'Khối cung ứng nguyên liệu (Cá + Tôm)', true),
+  ('GOODS_SERVICES', 'Khối cung ứng hàng hóa, dịch vụ', true),
+  ('PRODUCTION', 'Khối Sản Xuất', true),
+  ('QUALITY', 'Khối Quản lý chất lượng', true),
+  ('LOGISTICS', 'Khối Kho vận & Logistics', true),
+  ('SALES_MARKETING', 'Khối Kinh Doanh & Marketing', true),
+  ('FINANCE_ACCOUNTING', 'Khối Tài chính-Kế toán', true),
+  ('HR', 'Khối Nhân Sự', true),
+  ('IT_DIGITAL', 'Khối CNTT & Chuyển đổi số', true),
+  ('INTERNAL_CONTROL', 'Ban kiểm soát nội bộ', true)
+on conflict (code) do update
+set name = excluded.name,
+    is_active = excluded.is_active;
 
 insert into public.contribution_topics (code, category, name, description, response_hours, requires_review) values
   ('PAY_VENDOR', 'payment', 'Góp ý về thanh toán nhà cung cấp', 'Chia sẻ vướng mắc hoặc đề xuất cải tiến quy trình thanh toán.', 24, true),
